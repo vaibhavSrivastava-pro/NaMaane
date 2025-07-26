@@ -21,6 +21,7 @@ type NavigationProp = CompositeNavigationProp<
 export const MainTabNavigator: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const navigation = useNavigation<NavigationProp>();
 
   const handleExportCSV = async () => {
     try {
@@ -34,7 +35,7 @@ export const MainTabNavigator: React.FC = () => {
   return (
     <Drawer.Navigator
       initialRouteName="EN"
-      screenOptions={({ navigation }: { navigation: NavigationProp }) => ({
+      screenOptions={({ navigation: drawerNavigation }) => ({
         headerStyle: {
           backgroundColor: isDarkMode ? '#2c3e50' : '#f8f9fa',
         },
@@ -45,7 +46,7 @@ export const MainTabNavigator: React.FC = () => {
         },
         headerLeft: () => (
           <TouchableOpacity
-            onPress={() => navigation.openDrawer()}
+            onPress={() => drawerNavigation.openDrawer()}
             style={styles.headerButton}
             activeOpacity={0.7}
           >
@@ -65,7 +66,7 @@ export const MainTabNavigator: React.FC = () => {
             >
               <Ionicons
                 name="calendar"
-                size={26}
+                size={24}
                 color={isDarkMode ? '#ecf0f1' : '#2c3e50'}
               />
             </TouchableOpacity>
@@ -76,7 +77,7 @@ export const MainTabNavigator: React.FC = () => {
             >
               <Ionicons
                 name="download"
-                size={26}
+                size={24}
                 color={isDarkMode ? '#ecf0f1' : '#2c3e50'}
               />
             </TouchableOpacity>
@@ -91,10 +92,11 @@ export const MainTabNavigator: React.FC = () => {
         drawerLabelStyle: {
           fontSize: 16,
           fontWeight: '500',
-          marginLeft: -20,
+          marginLeft: -10,
         },
         drawerItemStyle: {
-          marginVertical: 5,
+          marginVertical: 8,
+          paddingVertical: 4,
         },
       })}
     >
@@ -128,11 +130,11 @@ const styles = StyleSheet.create({
   headerButtonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: -8,
+    marginRight: 8,
   },
   headerButton: {
-    marginLeft: 20,
-    padding: 8,
+    marginLeft: 12,
+    padding: 10,
     borderRadius: 8,
     minWidth: 44,
     minHeight: 44,

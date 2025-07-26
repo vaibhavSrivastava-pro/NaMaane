@@ -29,6 +29,8 @@ export const HomeScreen: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [entryId, setEntryId] = useState<string>('');
+
   const today = DateUtils.getTodayString();
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export const HomeScreen: React.FC = () => {
     try {
       const todayEntry = await StorageService.getEntryByDate(today);
       if (todayEntry) {
+        setEntryId(todayEntry.id);
         setProductiveActivities(
           todayEntry.productiveActivities.map((text, index) => ({
             id: generateId(),
@@ -64,6 +67,9 @@ export const HomeScreen: React.FC = () => {
         setFeelGoodReason(todayEntry.feelGoodReason || '');
         setIsSubmitted(todayEntry.isSubmitted || false);
         setIsEditing(false);
+      } else {
+        // New entry for today
+        setEntryId(generateId());
       }
     } catch (error) {
       console.error('Error loading today data:', error);
@@ -73,7 +79,7 @@ export const HomeScreen: React.FC = () => {
   const saveTodayData = async () => {
     try {
       const dayEntry: DayEntry = {
-        id: generateId(),
+        id: entryId || generateId(),
         date: today,
         productiveActivities: productiveActivities.map(a => a.text),
         unproductiveActivities: unproductiveActivities.map(a => a.text),
@@ -140,11 +146,33 @@ export const HomeScreen: React.FC = () => {
 
   const handleEdit = () => {
     setIsEditing(true);
-    setIsSubmitted(false);
+    // Auto-save is already enabled when editing, so changes save automatically
+  };
+
+  const handleFinishEdit = async () => {
+    if (!hasActivities) {
+      Alert.alert('No Activities', 'Please add at least one activity before finishing.');
+      return;
+    }
+
+    if (feelGood === undefined) {
+      Alert.alert('Incomplete Entry', 'Please fill out how you feel about your day before finishing.');
+      return;
+    }
+
+    try {
+      setIsSubmitted(true);
+      setIsEditing(false);
+      await saveTodayData();
+      Alert.alert('Changes Saved', 'Your entry has been updated!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save changes. Please try again.');
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+    setIsSubmitted(true);
     loadTodayData(); // Reload original data
   };
 
@@ -215,7 +243,7 @@ export const HomeScreen: React.FC = () => {
               onPress={handleSubmit}
               disabled={!hasActivities || feelGood === undefined}
             >
-              <Ionicons name="checkmark" size={20} color="#fff" />
+              <Ionicons name="checkmark-circle" size={22} color="#fff" />
               <Text style={styles.submitButtonText}>Submit Entry</Text>
             </TouchableOpacity>
           )}
@@ -225,7 +253,7 @@ export const HomeScreen: React.FC = () => {
               style={[styles.editButton, isDarkMode && styles.editButtonDark]}
               onPress={handleEdit}
             >
-              <Ionicons name="create" size={20} color="#fff" />
+              <Ionicons name="create-outline" size={22} color="#fff" />
               <Text style={styles.editButtonText}>Edit Entry</Text>
             </TouchableOpacity>
           )}
@@ -236,21 +264,21 @@ export const HomeScreen: React.FC = () => {
                 style={[styles.cancelButton, isDarkMode && styles.cancelButtonDark]}
                 onPress={handleCancelEdit}
               >
-                <Ionicons name="close" size={20} color="#fff" />
+                <Ionicons name="close-circle" size={22} color="#fff" />
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[
-                  styles.saveButton,
-                  isDarkMode && styles.saveButtonDark,
-                  (!hasActivities || feelGood === undefined) && styles.saveButtonDisabled
+                  styles.finishButton,
+                  isDarkMode && styles.finishButtonDark,
+                  (!hasActivities || feelGood === undefined) && styles.finishButtonDisabled
                 ]}
-                onPress={handleSubmit}
+                onPress={handleFinishEdit}
                 disabled={!hasActivities || feelGood === undefined}
               >
-                <Ionicons name="save" size={20} color="#fff" />
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Ionicons name="checkmark-circle" size={22} color="#fff" />
+                <Text style={styles.finishButtonText}>Finish</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -322,10 +350,18 @@ const styles = StyleSheet.create({
   submitButton: {
     flexDirection: 'row',
     backgroundColor: '#27ae60',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   submitButtonDark: {
     backgroundColor: '#229954',
@@ -343,10 +379,18 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: 'row',
     backgroundColor: '#3498db',
-    padding: 16,
+    padding: 18,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   editButtonDark: {
     backgroundColor: '#2980b9',
@@ -369,6 +413,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   cancelButtonDark: {
     backgroundColor: '#c0392b',
@@ -379,7 +431,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  saveButton: {
+  finishButton: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: '#27ae60',
@@ -387,15 +439,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  saveButtonDark: {
+  finishButtonDark: {
     backgroundColor: '#229954',
   },
-  saveButtonDisabled: {
+  finishButtonDisabled: {
     backgroundColor: '#95a5a6',
     opacity: 0.6,
   },
-  saveButtonText: {
+  finishButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
