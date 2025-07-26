@@ -90,7 +90,24 @@ eas build:configure
 eas build --platform ios
 ```
 
-#### 3. Alternative: Expo Development Build
+### 3. Exporting IPA
+
+> Make sure you have Xcode installed
+
+```bash
+
+#Start Metro
+`npx expo start --dev-client`
+
+#TBuild and run
+`npx expo run:ios`
+
+#Run the following script
+`./create-ipa.sh`
+
+```
+
+#### 4. Alternative: Expo Development Build
 
 For easier testing on your iPhone:
 
@@ -101,7 +118,7 @@ For easier testing on your iPhone:
 
 2. Install the generated `.ipa` file on your device via TestFlight or direct installation
 
-#### 4. Required iOS Permissions
+#### 5. Required iOS Permissions
 
 The app requires the following permissions that are automatically handled by Expo:
 - File system access (for CSV export)
@@ -174,17 +191,6 @@ The auto-export feature works as follows:
 - `npm run ios` - Run on iOS simulator
 - `npm run android` - Run on Android (if Android dependencies are added)
 - `npm run web` - Run in web browser
-
-## Exporting IPA
-
-# Terminal 1: Start Metro
-`npx expo start --dev-client`
-
-# Terminal 2: Build and run
-`npx expo run:ios`
-
-# Run the following script
-`./create-ipa.sh`
 
 ## Troubleshooting
 
