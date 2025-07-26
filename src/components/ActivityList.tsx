@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   Alert,
 } from 'react-native';
@@ -87,13 +86,13 @@ export const ActivityList: React.FC<ActivityListProps> = ({
         </View>
       )}
 
-      <FlatList
-        data={activities}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id}
-        style={styles.list}
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.list}>
+        {activities.map((activity) => (
+          <View key={activity.id}>
+            {renderActivity({ item: activity })}
+          </View>
+        ))}
+      </View>
     </View>
   );
 };

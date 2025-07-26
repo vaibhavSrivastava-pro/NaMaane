@@ -227,7 +227,7 @@ export const HomeScreen: React.FC = () => {
           reason={feelGoodReason}
           onFeelGoodChange={setFeelGood}
           onReasonChange={setFeelGoodReason}
-          isDisabled={!hasActivities || isReadOnly}
+          isDisabled={(!hasActivities && !isSubmitted) || isReadOnly}
           isDarkMode={isDarkMode}
         />
 
@@ -310,15 +310,18 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
+    flexWrap: 'wrap',
   },
   statusContainerDark: {
     backgroundColor: '#2d5a41',
   },
   statusText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#27ae60',
     marginLeft: 8,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   statusTextDark: {
     color: '#58d68d',
