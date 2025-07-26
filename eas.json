@@ -1,0 +1,28 @@
+{
+  "cli": {
+    "version": ">= 5.2.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "bundler": "metro"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "bundler": "metro"
+      }
+    },
+    "production": {
+      "ios": {
+        "bundler": "metro"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
