@@ -14,12 +14,20 @@ export default function App() {
   const isDarkMode = colorScheme === 'dark';
 
   useEffect(() => {
-    // Check if it's the first day of the month to auto-export
-    const today = new Date();
-    if (today.getDate() === 1) {
-      // Auto-export previous month
-      CSVExportService.autoExportPreviousMonth().catch(console.error);
-    }
+    // Check for auto-export opportunity on every app start
+    // The CSVExportService will handle the once-per-month logic internally
+    const checkAutoExport = async () => {
+      try {
+        await CSVExportService.checkAndPromptAutoExport();
+      } catch (error) {
+        console.error('Error checking auto-export:', error);
+      }
+    };
+
+    // Add a small delay to ensure the app is fully loaded
+    const timer = setTimeout(checkAutoExport, 2000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const navigationTheme = {

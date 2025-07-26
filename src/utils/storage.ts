@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DayEntry } from '../types';
 
 const STORAGE_KEY = 'EN_APP_DATA';
+const AUTO_EXPORT_KEY = 'EN_AUTO_EXPORT_TRACKER';
 
 export const StorageService = {
   async getAllEntries(): Promise<DayEntry[]> {
@@ -77,6 +78,33 @@ export const StorageService = {
     } catch (error) {
       console.error('Error getting completed dates:', error);
       return [];
+    }
+  },
+
+  async getLastAutoExportMonth(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(AUTO_EXPORT_KEY);
+    } catch (error) {
+      console.error('Error getting last auto export month:', error);
+      return null;
+    }
+  },
+
+  async setLastAutoExportMonth(yearMonth: string): Promise<void> {
+    try {
+      await AsyncStorage.setItem(AUTO_EXPORT_KEY, yearMonth);
+    } catch (error) {
+      console.error('Error setting last auto export month:', error);
+      throw error;
+    }
+  },
+
+  async resetAutoExportTracker(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(AUTO_EXPORT_KEY);
+    } catch (error) {
+      console.error('Error resetting auto export tracker:', error);
+      throw error;
     }
   }
 };

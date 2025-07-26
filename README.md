@@ -9,8 +9,9 @@ A React Native productivity app built with Expo and TypeScript. The app helps us
 - 😊 **Mood Tracking**: Daily mood reflection with reasons (only enabled when activities are added)
 - ✅ **Submit/Edit System**: Submit daily entries to finalize them, with ability to edit later
 - 📅 **Calendar View**: Visual tracking of submitted entries highlighted in orange
-- 📊 **CSV Export**: Export monthly data to CSV format
-- 🔄 **Auto Export**: Automatically exports previous month's data at the start of each month
+- 📊 **CSV Export**: Export monthly data to CSV format with sharing capabilities
+- 🔄 **Auto Export**: Automatically prompts to export previous month's data when entering a new month
+- 📱 **Smart Prompting**: Auto-export only triggers once per month and only when data exists
 
 ### WS Tab - Work & Study Tasks
 - ✅ **Multi-level Tasks**: Create tasks with unlimited subtasks hierarchy
@@ -152,9 +153,20 @@ src/
 ## Data Export (EN Tab)
 
 - **Manual Export**: Use the download button in the navigation bar to export EN tracking data
-- **Auto Export**: EN data is automatically exported at the beginning of each month
+- **Auto Export**: The app automatically prompts you to export the previous month's data when you enter a new month
+- **Smart Timing**: Auto-export only triggers once per month and only when data exists for the previous month
+- **User Choice**: You can choose to export immediately or skip the auto-export prompt
 - **CSV Format**: Includes Date, Productive Activities, Unproductive Activities, Mood, and Reason
 - **Note**: WS tasks are stored locally and persist across sessions but are not included in CSV exports
+
+### Auto-Export Details
+
+The auto-export feature works as follows:
+1. **Trigger**: Checks for export opportunity every time the app starts
+2. **Timing**: Only prompts once per month when entering a new month
+3. **Data Check**: Only shows prompt if previous month has data to export
+4. **User Control**: User can choose to export or skip
+5. **Persistence**: Remembers choice to avoid repeated prompts
 
 ## Development Commands
 
