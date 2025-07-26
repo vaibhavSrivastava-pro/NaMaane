@@ -9,78 +9,89 @@ import {
   Text,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { ActivityList } from '../components/ActivityList';
 import { MoodSection } from '../components/MoodSection';
-import { DayEntry, Activity } from '../types';
+import { DayEntry, Activity, TabParamList } from '../types';
 import { StorageService } from '../utils/storage';
 import { DateUtils } from '../utils/dateUtils';
 
 // Simple ID generator
 const generateId = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
+type HomeScreenRouteProp = RouteProp<TabParamList, 'EN'>;
+
 export const HomeScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const route = useRoute<HomeScreenRouteProp>();
   
   const [productiveActivities, setProductiveActivities] = useState<Activity[]>([]);
   const [unproductiveActivities, setUnproductiveActivities] = useState<Activity[]>([]);
   const [feelGood, setFeelGood] = useState<boolean | undefined>(undefined);
   const [feelGoodReason, setFeelGoodReason] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
+  const [isSubmitted, setIsSubmitted] = useState(false);  const [isEditing, setIsEditing] = useState(false);
   const [entryId, setEntryId] = useState<string>('');
+  const [currentDate, setCurrentDate] = useState<string>('');
 
-  const today = DateUtils.getTodayString();
-
-  useEffect(() => {
-    loadTodayData();
-  }, []);
+  // Get the date to load - either from route params or today
+  const dateToLoad = route.params?.selectedDate || DateUtils.getTodayString();
 
   useEffect(() => {
-    // Only auto-save if not submitted or if currently editing
-    if (!isSubmitted || isEditing) {
-      saveTodayData();
+    setCurrentDate(dateToLoad);
+    loadDataForDate(dateToLoad);
+  }, [dateToLoad]);
+
+  useEffect(() => {
+    // Only auto-save if not submitted or if currently editing, and it's today's date
+    if ((!isSubmitted || isEditing) && currentDate === DateUtils.getTodayString()) {
+      saveDataForDate();
     }
-  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason]);
+  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason, currentDate]);
 
-  const loadTodayData = async () => {
+  const loadDataForDate = async (date: string) => {
     try {
-      const todayEntry = await StorageService.getEntryByDate(today);
-      if (todayEntry) {
-        setEntryId(todayEntry.id);
+      const entry = await StorageService.getEntryByDate(date);
+      if (entry) {
+        setEntryId(entry.id);
         setProductiveActivities(
-          todayEntry.productiveActivities.map((text, index) => ({
+          entry.productiveActivities.map((text, index) => ({
             id: generateId(),
             text,
             createdAt: new Date().toISOString(),
           }))
         );
         setUnproductiveActivities(
-          todayEntry.unproductiveActivities.map((text, index) => ({
+          entry.unproductiveActivities.map((text, index) => ({
             id: generateId(),
             text,
             createdAt: new Date().toISOString(),
           }))
         );
-        setFeelGood(todayEntry.feelGoodAboutDay);
-        setFeelGoodReason(todayEntry.feelGoodReason || '');
-        setIsSubmitted(todayEntry.isSubmitted || false);
+        setFeelGood(entry.feelGoodAboutDay);
+        setFeelGoodReason(entry.feelGoodReason || '');
+        setIsSubmitted(entry.isSubmitted || false);
         setIsEditing(false);
       } else {
-        // New entry for today
+        // New entry for this date
         setEntryId(generateId());
+        setProductiveActivities([]);
+        setUnproductiveActivities([]);
+        setFeelGood(undefined);
+        setFeelGoodReason('');
+        setIsSubmitted(false);
+        setIsEditing(false);
       }
     } catch (error) {
-      console.error('Error loading today data:', error);
+      console.error('Error loading data for date:', error);
     }
   };
 
-  const saveTodayData = async () => {
+  const saveDataForDate = async () => {
     try {
       const dayEntry: DayEntry = {
         id: entryId || generateId(),
-        date: today,
+        date: currentDate,
         productiveActivities: productiveActivities.map(a => a.text),
         unproductiveActivities: unproductiveActivities.map(a => a.text),
         feelGoodAboutDay: feelGood,
@@ -92,7 +103,7 @@ export const HomeScreen: React.FC = () => {
 
       await StorageService.saveEntry(dayEntry);
     } catch (error) {
-      console.error('Error saving today data:', error);
+      console.error('Error saving data for date:', error);
     }
   };
 
@@ -136,7 +147,7 @@ export const HomeScreen: React.FC = () => {
     try {
       setIsSubmitted(true);
       setIsEditing(false);
-      await saveTodayData();
+      await saveDataForDate();
       Alert.alert('Entry Submitted', 'Your daily entry has been successfully submitted!');
     } catch (error) {
       Alert.alert('Error', 'Failed to submit entry. Please try again.');
@@ -163,7 +174,7 @@ export const HomeScreen: React.FC = () => {
     try {
       setIsSubmitted(true);
       setIsEditing(false);
-      await saveTodayData();
+      await saveDataForDate();
       Alert.alert('Changes Saved', 'Your entry has been updated!');
     } catch (error) {
       Alert.alert('Error', 'Failed to save changes. Please try again.');
@@ -173,11 +184,13 @@ export const HomeScreen: React.FC = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setIsSubmitted(true);
-    loadTodayData(); // Reload original data
+    loadDataForDate(currentDate); // Reload original data
   };
 
   const hasActivities = productiveActivities.length > 0 || unproductiveActivities.length > 0;
   const isReadOnly = isSubmitted && !isEditing;
+  const isToday = currentDate === DateUtils.getTodayString();
+  const canEdit = isToday || (isSubmitted && !isToday); // Can edit today anytime, or past submitted entries
 
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -186,11 +199,21 @@ export const HomeScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Date Header */}
+        {!isToday && (
+          <View style={[styles.dateContainer, isDarkMode && styles.dateContainerDark]}>
+            <Ionicons name="calendar" size={20} color={isDarkMode ? '#3498db' : '#2980b9'} />
+            <Text style={[styles.dateText, isDarkMode && styles.dateTextDark]}>
+              Viewing: {DateUtils.formatDisplayDate(currentDate)}
+            </Text>
+          </View>
+        )}
+
         {isSubmitted && !isEditing && (
           <View style={[styles.statusContainer, isDarkMode && styles.statusContainerDark]}>
             <Ionicons name="checkmark-circle" size={24} color="#27ae60" />
             <Text style={[styles.statusText, isDarkMode && styles.statusTextDark]}>
-              Entry Submitted for {DateUtils.formatDisplayDate(today)}
+              Entry Submitted for {DateUtils.formatDisplayDate(currentDate)}
             </Text>
           </View>
         )}
@@ -229,11 +252,12 @@ export const HomeScreen: React.FC = () => {
           onReasonChange={setFeelGoodReason}
           isDisabled={(!hasActivities && !isSubmitted) || isReadOnly}
           isDarkMode={isDarkMode}
+          showActivityMessage={!isSubmitted}
         />
 
         {/* Submit/Edit Buttons */}
         <View style={styles.buttonContainer}>
-          {!isSubmitted && (
+          {!isSubmitted && isToday && (
             <TouchableOpacity
               style={[
                 styles.submitButton,
@@ -248,7 +272,7 @@ export const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           )}
 
-          {isSubmitted && !isEditing && (
+          {isSubmitted && !isEditing && canEdit && (
             <TouchableOpacity
               style={[styles.editButton, isDarkMode && styles.editButtonDark]}
               onPress={handleEdit}
@@ -463,5 +487,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e8f4f8',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  dateContainerDark: {
+    backgroundColor: '#34495e',
+  },
+  dateText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#2980b9',
+    marginLeft: 8,
+  },
+  dateTextDark: {
+    color: '#5dade2',
   },
 });

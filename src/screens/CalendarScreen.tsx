@@ -6,11 +6,17 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StorageService } from '../utils/storage';
+import { RootStackParamList } from '../types';
+
+type CalendarScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Calendar'>;
 
 export const CalendarScreen: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
+  const navigation = useNavigation<CalendarScreenNavigationProp>();
   
   const [markedDates, setMarkedDates] = useState<{[key: string]: any}>({});
 
@@ -37,9 +43,17 @@ export const CalendarScreen: React.FC = () => {
     }
   };
 
-  const onDayPress = (day: DateData) => {
-    // Could add functionality to view specific day details here
-    console.log('Selected day:', day);
+  const onDayPress = async (day: DateData) => {
+    try {
+      // Check if there's an entry for this date
+      const entry = await StorageService.getEntryByDate(day.dateString);
+      if (entry && entry.isSubmitted) {
+        // Navigate to home screen with the selected date
+        navigation.navigate('Main', { selectedDate: day.dateString });
+      }
+    } catch (error) {
+      console.error('Error checking day entry:', error);
+    }
   };
 
   const calendarTheme = {
@@ -71,7 +85,7 @@ export const CalendarScreen: React.FC = () => {
           Tracking Calendar
         </Text>
         <Text style={[styles.subtitle, isDarkMode && styles.subtitleDark]}>
-          Days highlighted in orange show submitted entries with completed mood tracking
+          Days highlighted show submitted entries with completed tracking
         </Text>
       </View>
       

@@ -14,6 +14,7 @@ interface MoodSectionProps {
   onReasonChange: (text: string) => void;
   isDisabled: boolean;
   isDarkMode: boolean;
+  showActivityMessage?: boolean;
 }
 
 export const MoodSection: React.FC<MoodSectionProps> = ({
@@ -23,6 +24,7 @@ export const MoodSection: React.FC<MoodSectionProps> = ({
   onReasonChange,
   isDisabled,
   isDarkMode,
+  showActivityMessage = true,
 }) => {
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -59,7 +61,7 @@ export const MoodSection: React.FC<MoodSectionProps> = ({
         numberOfLines={3}
       />
       
-      {isDisabled && (
+      {isDisabled && showActivityMessage && (
         <Text style={[styles.disabledText, isDarkMode && styles.disabledTextDark]}>
           Add at least one activity above to fill this section
         </Text>

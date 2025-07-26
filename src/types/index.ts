@@ -27,11 +27,11 @@ export interface Task {
 }
 
 export type RootStackParamList = {
-  Main: undefined;
+  Main: { selectedDate?: string } | undefined;
   Calendar: undefined;
 };
 
 export type TabParamList = {
-  EN: undefined;
+  EN: { selectedDate?: string } | undefined;
   WS: undefined;
 };
