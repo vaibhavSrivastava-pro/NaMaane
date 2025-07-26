@@ -3,26 +3,30 @@
     "version": ">= 5.2.0"
   },
   "build": {
+    "simulator": {
+      "ios": {
+        "simulator": true
+      }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "bundler": "metro"
+        "simulator": false
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "bundler": "metro"
+        "simulator": false
       }
     },
-    "production": {
+    "device": {
+      "distribution": "internal",
       "ios": {
-        "bundler": "metro"
+        "simulator": false,
+        "buildConfiguration": "Release"
       }
     }
-  },
-  "submit": {
-    "production": {}
   }
 }

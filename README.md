@@ -175,6 +175,17 @@ The auto-export feature works as follows:
 - `npm run android` - Run on Android (if Android dependencies are added)
 - `npm run web` - Run in web browser
 
+## Exporting IPA
+
+# Terminal 1: Start Metro
+`npx expo start --dev-client`
+
+# Terminal 2: Build and run
+`npx expo run:ios`
+
+# Run the following script
+`./create-ipa.sh`
+
 ## Troubleshooting
 
 ### Common iOS Issues
