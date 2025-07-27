@@ -6,7 +6,7 @@
 # Terminal 2: Build and run
 #npx expo run:ios
 
-echo "🔨 Creating device IPA for iTrack (with Expo dev client)..."
+echo "🔨 Creating device IPA for Na Maane! (with Expo dev client)..."
 
 # Install expo-dev-client if not present
 if ! grep -q "expo-dev-client" package.json; then
@@ -14,9 +14,10 @@ if ! grep -q "expo-dev-client" package.json; then
     npx expo install expo-dev-client
 fi
 
-# Check if iOS project exists
-if [ ! -d "ios" ]; then
-    echo "📱 iOS project not found. Generating with dev client..."
+# Check if iOS project exists or if app name has changed
+if [ ! -d "ios" ] || [ ! -d "ios/Na Maane!" ]; then
+    echo "📱 iOS project not found or app name changed. Regenerating with dev client..."
+    rm -rf ios
     npx expo prebuild --platform ios --clear
     cd ios && pod install && cd ..
 fi
@@ -29,11 +30,11 @@ sleep 10
 
 # Build and archive for device
 echo "🏗️ Building and archiving for iOS device..."
-xcodebuild -workspace ios/iTrack.xcworkspace \
-    -scheme iTrack \
+xcodebuild -workspace "ios/Na Maane!.xcworkspace" \
+    -scheme "Na Maane!" \
     -configuration Release \
     -destination generic/platform=iOS \
-    -archivePath build/iTrack.xcarchive \
+    -archivePath "build/Na Maane!.xcarchive" \
     clean archive
 
 # Stop Metro bundler
@@ -59,9 +60,9 @@ EOF
 # Export IPA
 echo "📦 Exporting IPA..."
 xcodebuild -exportArchive \
-    -archivePath build/iTrack.xcarchive \
+    -archivePath "build/Na Maane!.xcarchive" \
     -exportPath build/ \
     -exportOptionsPlist ios/ExportOptions.plist
 
-echo "✅ IPA created: build/iTrack.ipa"
+echo "✅ IPA created: build/Na Maane!.ipa"
 echo "📱 This IPA includes Expo dev client and should work with Sideloadly!"

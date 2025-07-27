@@ -1,4 +1,4 @@
-# iTrack - React Native Productivity App
+# Na Maane! - React Native Productivity App
 
 A React Native productivity app built with Expo and TypeScript. The app helps users track their daily activities and manage work/study tasks with a comprehensive todo system.
 
@@ -99,7 +99,7 @@ eas build --platform ios
 #Start Metro
 `npx expo start --dev-client`
 
-#TBuild and run
+#Build and run
 `npx expo run:ios`
 
 #Run the following script

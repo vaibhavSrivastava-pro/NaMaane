@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Na Maane! Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            display: block;
+        }
+        button {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #d35400;
+        }
+        .preview {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .preview-small {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .instructions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Na Maane! App Icon Generator</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Generate Icon" to create the icon design</li>
+                <li>Right-click on each canvas and "Save image as..."</li>
+                <li>Save as PNG files with the specified names</li>
+                <li>Replace the files in your <code>/assets/</code> directory</li>
+            </ol>
+        </div>
+
+        <button onclick="generateIcons()">🎨 Generate Na Maane! Icons</button>
+        <button onclick="downloadAll()">💾 Download All Icons</button>
+
+        <div class="preview">
+            <div>
+                <h3>Main App Icon (1024×1024)</h3>
+                <canvas id="mainIcon" width="256" height="256"></canvas>
+                <p><strong>Save as:</strong> <code>icon.png</code></p>
+            </div>
+            <div>
+                <h3>Adaptive Icon (1024×1024)</h3>
+                <canvas id="adaptiveIcon" width="256" height="256"></canvas>
+                <p><strong>Save as:</strong> <code>adaptive-icon.png</code></p>
+            </div>
+        </div>
+
+        <div class="preview">
+            <div>
+                <h3>Splash Icon (1024×1024)</h3>
+                <canvas id="splashIcon" width="256" height="256"></canvas>
+                <p><strong>Save as:</strong> <code>splash-icon.png</code></p>
+            </div>
+            <div>
+                <h3>Favicon (48×48)</h3>
+                <canvas id="favicon" width="48" height="48"></canvas>
+                <p><strong>Save as:</strong> <code>favicon.png</code></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function generateIcons() {
+            // Generate main app icon (1024x1024, displayed as 256x256)
+            drawMainIcon('mainIcon', 256);
+            
+            // Generate adaptive icon (foreground only)
+            drawAdaptiveIcon('adaptiveIcon', 256);
+            
+            // Generate splash icon (simpler version)
+            drawSplashIcon('splashIcon', 256);
+            
+            // Generate favicon (tiny version)
+            drawFavicon('favicon', 48);
+        }
+
+        function drawMainIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Background gradient
+            const gradient = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+            gradient.addColorStop(0, '#f39c12');
+            gradient.addColorStop(1, '#e67e22');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Main circle (progress ring background)
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/3, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = size/20;
+            ctx.stroke();
+            
+            // Progress ring (75% complete)
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/3, -Math.PI/2, -Math.PI/2 + (2 * Math.PI * 0.75));
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/20;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Inner checkmark
+            ctx.beginPath();
+            ctx.moveTo(size/2 - size/8, size/2);
+            ctx.lineTo(size/2 - size/16, size/2 + size/12);
+            ctx.lineTo(size/2 + size/6, size/2 - size/8);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/25;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawAdaptiveIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas (transparent background for adaptive icon)
+            ctx.clearRect(0, 0, size, size);
+            
+            // Safe area is center 66% (169px out of 256px)
+            const safeSize = size * 0.66;
+            const offset = (size - safeSize) / 2;
+            
+            // Main circle (progress ring background)
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, safeSize/3, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(231, 126, 34, 0.3)';
+            ctx.lineWidth = safeSize/15;
+            ctx.stroke();
+            
+            // Progress ring (75% complete)
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, safeSize/3, -Math.PI/2, -Math.PI/2 + (2 * Math.PI * 0.75));
+            ctx.strokeStyle = '#e67e22';
+            ctx.lineWidth = safeSize/15;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Inner checkmark
+            ctx.beginPath();
+            ctx.moveTo(size/2 - safeSize/8, size/2);
+            ctx.lineTo(size/2 - safeSize/16, size/2 + safeSize/12);
+            ctx.lineTo(size/2 + safeSize/6, size/2 - safeSize/8);
+            ctx.strokeStyle = '#e67e22';
+            ctx.lineWidth = safeSize/20;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawSplashIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas (transparent background)
+            ctx.clearRect(0, 0, size, size);
+            
+            // Simpler version - just the progress ring and checkmark
+            // Progress ring (75% complete)
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/3, -Math.PI/2, -Math.PI/2 + (2 * Math.PI * 0.75));
+            ctx.strokeStyle = '#e67e22';
+            ctx.lineWidth = size/15;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Inner checkmark
+            ctx.beginPath();
+            ctx.moveTo(size/2 - size/8, size/2);
+            ctx.lineTo(size/2 - size/16, size/2 + size/12);
+            ctx.lineTo(size/2 + size/6, size/2 - size/8);
+            ctx.strokeStyle = '#e67e22';
+            ctx.lineWidth = size/20;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawFavicon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Simple background
+            ctx.fillStyle = '#e67e22';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Simple checkmark
+            ctx.beginPath();
+            ctx.moveTo(size/2 - size/4, size/2);
+            ctx.lineTo(size/2 - size/8, size/2 + size/6);
+            ctx.lineTo(size/2 + size/3, size/2 - size/4);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size/12;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function downloadCanvas(canvas, filename) {
+            // Create high-res version (1024x1024 for main icons, actual size for favicon)
+            const targetSize = filename === 'favicon.png' ? 48 : 1024;
+            const highResCanvas = document.createElement('canvas');
+            const highResCtx = highResCanvas.getContext('2d');
+            
+            highResCanvas.width = targetSize;
+            highResCanvas.height = targetSize;
+            
+            // Scale up the image
+            highResCtx.imageSmoothingEnabled = false;
+            highResCtx.drawImage(canvas, 0, 0, targetSize, targetSize);
+            
+            // Download
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = highResCanvas.toDataURL();
+            link.click();
+        }
+
+        function downloadAll() {
+            const icons = [
+                { canvas: document.getElementById('mainIcon'), filename: 'icon.png' },
+                { canvas: document.getElementById('adaptiveIcon'), filename: 'adaptive-icon.png' },
+                { canvas: document.getElementById('splashIcon'), filename: 'splash-icon.png' },
+                { canvas: document.getElementById('favicon'), filename: 'favicon.png' }
+            ];
+            
+            icons.forEach((icon, index) => {
+                setTimeout(() => {
+                    downloadCanvas(icon.canvas, icon.filename);
+                }, index * 500); // Stagger downloads
+            });
+        }
+
+        // Generate icons on page load
+        window.onload = function() {
+            generateIcons();
+        };
+    </script>
+</body>
+</html>

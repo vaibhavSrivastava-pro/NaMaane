@@ -66,18 +66,18 @@ export const MainTabNavigator: React.FC = () => {
             >
               <Ionicons
                 name="calendar"
-                size={24}
+                size={25}
                 color={isDarkMode ? '#ecf0f1' : '#2c3e50'}
               />
             </TouchableOpacity>
             <TouchableOpacity 
               onPress={handleExportCSV}
-              style={styles.headerButton}
+              style={[styles.headerButton, styles.exportButton]}
               activeOpacity={0.7}
             >
               <Ionicons
                 name="download"
-                size={24}
+                size={27}
                 color={isDarkMode ? '#ecf0f1' : '#2c3e50'}
               />
             </TouchableOpacity>
@@ -104,7 +104,7 @@ export const MainTabNavigator: React.FC = () => {
         name="EN"
         component={HomeScreen}
         options={{
-          title: 'iTrack - Personal',
+          title: 'Na Maane! - Personal',
           drawerLabel: 'Personal Tracking',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="person" size={size} color={color} />
@@ -115,7 +115,7 @@ export const MainTabNavigator: React.FC = () => {
         name="WS"
         component={WSScreen}
         options={{
-          title: 'iTrack - Work & Study',
+          title: 'Na Maane! - Work & Study',
           drawerLabel: 'Work & Study',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="briefcase" size={size} color={color} />
@@ -130,15 +130,23 @@ const styles = StyleSheet.create({
   headerButtonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 8,
+    justifyContent: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 4, // Increased from 2 to 4 to accommodate larger icons
+    marginRight: 16, // More margin to push further right
   },
   headerButton: {
-    marginLeft: 12,
-    padding: 10,
-    borderRadius: 8,
-    minWidth: 44,
-    minHeight: 44,
+    marginHorizontal: 1, // Reduced from 4 to 1 for closer spacing
+    padding: 8, // Reduced padding for tighter container
+    borderRadius: 6,
+    minWidth: 40,
+    minHeight: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  exportButton: {
+    marginTop: -2, // Move the export icon up by 2px
+    minHeight: 42, // Slightly taller to accommodate larger icon
   },
 });

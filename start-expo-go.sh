@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "🚀 Starting iTrack with Expo Go - IMMEDIATE INSTALLATION"
+echo "🚀 Starting Na Maane! with Expo Go - IMMEDIATE INSTALLATION"
 echo ""
 echo "📱 STEPS TO INSTALL ON YOUR IPHONE:"
 echo "1. Open App Store on your iPhone"
 echo "2. Search and install 'Expo Go'"
 echo "3. Come back here and scan the QR code"
-echo "4. iTrack will open on your iPhone!"
+echo "4. Na Maane! will open on your iPhone!"
 echo ""
 echo "✅ THIS METHOD:"
 echo "   • Works in 30 seconds"
