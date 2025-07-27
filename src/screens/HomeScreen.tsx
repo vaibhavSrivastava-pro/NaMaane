@@ -34,22 +34,29 @@ export const HomeScreen: React.FC = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);  const [isEditing, setIsEditing] = useState(false);
   const [entryId, setEntryId] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>(DateUtils.getTodayString());
+  const [isDateSwitching, setIsDateSwitching] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   // Load initial data on component mount
   useEffect(() => {
     const initializeDate = async () => {
+      setIsDateSwitching(true); // Prevent auto-save during initialization
+      
       // Check if there's a selected date from calendar navigation
       const selectedDate = await DateSelectionService.getSelectedDate();
       const dateToLoad = selectedDate || route.params?.selectedDate || DateUtils.getTodayString();
       
       console.log('HomeScreen initializing with date:', dateToLoad);
       setCurrentDate(dateToLoad);
-      loadDataForDate(dateToLoad);
+      await loadDataForDate(dateToLoad);
       
       // Clear the selected date after using it
       if (selectedDate) {
         await DateSelectionService.clearSelectedDate();
       }
+      
+      setIsDateSwitching(false);
+      setIsInitialized(true);
     };
     
     initializeDate();
@@ -59,39 +66,102 @@ export const HomeScreen: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       const checkForDateChange = async () => {
+        if (!isInitialized) return; // Don't process during initial load
+        
         // Check if there's a new selected date from calendar
         const selectedDate = await DateSelectionService.getSelectedDate();
         
         if (selectedDate && selectedDate !== currentDate) {
           console.log('HomeScreen: Date changed from calendar to', selectedDate);
+          
+          // Save current data before switching
+          setIsDateSwitching(true);
+          await saveCurrentDataBeforeSwitch();
+          
           setCurrentDate(selectedDate);
-          loadDataForDate(selectedDate);
+          await loadDataForDate(selectedDate);
           await DateSelectionService.clearSelectedDate();
+          
+          setIsDateSwitching(false);
         } else if (route.params?.selectedDate && route.params.selectedDate !== currentDate) {
           console.log('HomeScreen: Date changed from route params to', route.params.selectedDate);
+          
+          // Save current data before switching
+          setIsDateSwitching(true);
+          await saveCurrentDataBeforeSwitch();
+          
           setCurrentDate(route.params.selectedDate);
-          loadDataForDate(route.params.selectedDate);
+          await loadDataForDate(route.params.selectedDate);
+          
+          setIsDateSwitching(false);
         }
       };
       
       checkForDateChange();
-    }, [route.params?.selectedDate, currentDate])
+    }, [route.params?.selectedDate, currentDate, isInitialized])
   );
+
+  const saveCurrentDataBeforeSwitch = async () => {
+    try {
+      // Only save if we have meaningful data (activities or mood)
+      const hasData = productiveActivities.length > 0 || 
+                     unproductiveActivities.length > 0 || 
+                     feelGood !== undefined || 
+                     feelGoodReason.trim() !== '';
+      
+      if (currentDate && hasData) {
+        const dayEntry: DayEntry = {
+          id: entryId || generateId(),
+          date: currentDate,
+          productiveActivities: productiveActivities.map(a => a.text),
+          unproductiveActivities: unproductiveActivities.map(a => a.text),
+          feelGoodAboutDay: feelGood,
+          feelGoodReason: feelGoodReason,
+          isSubmitted: isSubmitted,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        await StorageService.saveEntry(dayEntry);
+        console.log('Saved data for date before switching:', currentDate, 'with', 
+                   productiveActivities.length + unproductiveActivities.length, 'activities');
+      } else {
+        console.log('No meaningful data to save for date:', currentDate);
+      }
+    } catch (error) {
+      console.error('Error saving data before switch:', error);
+    }
+  };
 
   useEffect(() => {
     // Auto-save when data changes, but only if:
-    // 1. Entry is not submitted yet (draft mode), OR
-    // 2. Currently editing an existing entry
-    // This ensures we save to the correct date (currentDate), not just today
-    if (!isSubmitted || isEditing) {
-      if (currentDate) { // Make sure we have a valid date
+    // 1. Component is initialized
+    // 2. Entry is not submitted yet (draft mode), OR currently editing an existing entry
+    // 3. NOT currently switching dates (to prevent saving to wrong date)
+    // 4. We have a valid current date
+    if (isInitialized && (!isSubmitted || isEditing) && !isDateSwitching && currentDate) {
+      const timeoutId = setTimeout(() => {
+        console.log('Auto-saving for date:', currentDate);
         saveDataForDate();
-      }
+      }, 500); // Debounce to avoid excessive saves
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason, currentDate, isSubmitted, isEditing]);
+  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason, currentDate, isSubmitted, isEditing, isDateSwitching, isInitialized]);
 
   const loadDataForDate = async (date: string) => {
     try {
+      console.log('Loading data for date:', date);
+      
+      // First, clear all current state to prevent any residual data
+      setProductiveActivities([]);
+      setUnproductiveActivities([]);
+      setFeelGood(undefined);
+      setFeelGoodReason('');
+      setIsSubmitted(false);
+      setIsEditing(false);
+      setEntryId('');
+      
       const entry = await StorageService.getEntryByDate(date);
       if (entry) {
         setEntryId(entry.id);
@@ -112,19 +182,22 @@ export const HomeScreen: React.FC = () => {
         setFeelGood(entry.feelGoodAboutDay);
         setFeelGoodReason(entry.feelGoodReason || '');
         setIsSubmitted(entry.isSubmitted || false);
-        setIsEditing(false);
+        console.log('Loaded existing entry for', date, 'with', entry.productiveActivities.length + entry.unproductiveActivities.length, 'activities');
       } else {
         // New entry for this date
         setEntryId(generateId());
-        setProductiveActivities([]);
-        setUnproductiveActivities([]);
-        setFeelGood(undefined);
-        setFeelGoodReason('');
-        setIsSubmitted(false);
-        setIsEditing(false);
+        console.log('Created new entry for', date);
       }
     } catch (error) {
       console.error('Error loading data for date:', error);
+      // Ensure clean state even on error
+      setEntryId(generateId());
+      setProductiveActivities([]);
+      setUnproductiveActivities([]);
+      setFeelGood(undefined);
+      setFeelGoodReason('');
+      setIsSubmitted(false);
+      setIsEditing(false);
     }
   };
 
@@ -143,6 +216,8 @@ export const HomeScreen: React.FC = () => {
       };
 
       await StorageService.saveEntry(dayEntry);
+      console.log('Auto-saved entry for', currentDate, 'with', 
+                 dayEntry.productiveActivities.length + dayEntry.unproductiveActivities.length, 'activities');
     } catch (error) {
       console.error('Error saving data for date:', error);
     }
