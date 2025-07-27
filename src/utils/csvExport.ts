@@ -5,16 +5,42 @@ import { DayEntry } from '../types';
 import { StorageService } from './storage';
 
 export const CSVExportService = {
-  formatCSVData(entries: DayEntry[]): string {
+  formatCSVData(entries: DayEntry[], year: number, month: number): string {
     const headers = ['Date', 'What did I do Productive', 'What did I do Unproductive', 'Do you feel good about your day?', 'Why'];
     
-    const rows = entries.map(entry => [
-      entry.date,
-      entry.productiveActivities.join('; '),
-      entry.unproductiveActivities.join('; '),
-      entry.feelGoodAboutDay !== undefined ? (entry.feelGoodAboutDay ? 'Yes' : 'No') : '',
-      entry.feelGoodReason || ''
-    ]);
+    // Get all days in the month up to today (or end of month if in the past)
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const lastDayToInclude = isCurrentMonth ? Math.min(today.getDate(), daysInMonth) : daysInMonth;
+    
+    const rows: string[][] = [];
+    
+    // Create entries for all days from 1st to the last day to include
+    for (let day = 1; day <= lastDayToInclude; day++) {
+      const dateString = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+      const entry = entries.find(e => e.date === dateString);
+      
+      if (entry) {
+        // Entry exists
+        rows.push([
+          entry.date,
+          entry.productiveActivities.join('; '),
+          entry.unproductiveActivities.join('; '),
+          entry.feelGoodAboutDay !== undefined ? (entry.feelGoodAboutDay ? 'Yes' : 'No') : '',
+          entry.feelGoodReason || ''
+        ]);
+      } else {
+        // No entry for this day - create empty row
+        rows.push([
+          dateString,
+          '', // No productive activities
+          '', // No unproductive activities
+          '', // No mood data
+          ''  // No reason
+        ]);
+      }
+    }
 
     const csvContent = [headers, ...rows]
       .map(row => row.map(field => `"${field.replace(/"/g, '""')}"`).join(','))
@@ -27,12 +53,8 @@ export const CSVExportService = {
     try {
       const entries = await StorageService.getEntriesForMonth(year, month);
       
-      if (entries.length === 0) {
-        Alert.alert('No Data', 'No entries found for this month.');
-        return;
-      }
-      
-      const csvData = this.formatCSVData(entries);
+      // Generate CSV data with all days of the month (including empty days)
+      const csvData = this.formatCSVData(entries, year, month);
       
       const monthNames = [
         'January', 'February', 'March', 'April', 'May', 'June',

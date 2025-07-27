@@ -9,11 +9,12 @@ import {
   Text,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ActivityList } from '../components/ActivityList';
 import { MoodSection } from '../components/MoodSection';
 import { DayEntry, Activity, TabParamList } from '../types';
 import { StorageService } from '../utils/storage';
+import { DateSelectionService } from '../utils/dateSelection';
 import { DateUtils } from '../utils/dateUtils';
 
 // Simple ID generator
@@ -32,22 +33,62 @@ export const HomeScreen: React.FC = () => {
   const [feelGoodReason, setFeelGoodReason] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);  const [isEditing, setIsEditing] = useState(false);
   const [entryId, setEntryId] = useState<string>('');
-  const [currentDate, setCurrentDate] = useState<string>('');
+  const [currentDate, setCurrentDate] = useState<string>(DateUtils.getTodayString());
 
-  // Get the date to load - either from route params or today
-  const dateToLoad = route.params?.selectedDate || DateUtils.getTodayString();
+  // Load initial data on component mount
+  useEffect(() => {
+    const initializeDate = async () => {
+      // Check if there's a selected date from calendar navigation
+      const selectedDate = await DateSelectionService.getSelectedDate();
+      const dateToLoad = selectedDate || route.params?.selectedDate || DateUtils.getTodayString();
+      
+      console.log('HomeScreen initializing with date:', dateToLoad);
+      setCurrentDate(dateToLoad);
+      loadDataForDate(dateToLoad);
+      
+      // Clear the selected date after using it
+      if (selectedDate) {
+        await DateSelectionService.clearSelectedDate();
+      }
+    };
+    
+    initializeDate();
+  }, []);
+
+  // Handle route parameter changes and focus events
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkForDateChange = async () => {
+        // Check if there's a new selected date from calendar
+        const selectedDate = await DateSelectionService.getSelectedDate();
+        
+        if (selectedDate && selectedDate !== currentDate) {
+          console.log('HomeScreen: Date changed from calendar to', selectedDate);
+          setCurrentDate(selectedDate);
+          loadDataForDate(selectedDate);
+          await DateSelectionService.clearSelectedDate();
+        } else if (route.params?.selectedDate && route.params.selectedDate !== currentDate) {
+          console.log('HomeScreen: Date changed from route params to', route.params.selectedDate);
+          setCurrentDate(route.params.selectedDate);
+          loadDataForDate(route.params.selectedDate);
+        }
+      };
+      
+      checkForDateChange();
+    }, [route.params?.selectedDate, currentDate])
+  );
 
   useEffect(() => {
-    setCurrentDate(dateToLoad);
-    loadDataForDate(dateToLoad);
-  }, [dateToLoad]);
-
-  useEffect(() => {
-    // Only auto-save if not submitted or if currently editing, and it's today's date
-    if ((!isSubmitted || isEditing) && currentDate === DateUtils.getTodayString()) {
-      saveDataForDate();
+    // Auto-save when data changes, but only if:
+    // 1. Entry is not submitted yet (draft mode), OR
+    // 2. Currently editing an existing entry
+    // This ensures we save to the correct date (currentDate), not just today
+    if (!isSubmitted || isEditing) {
+      if (currentDate) { // Make sure we have a valid date
+        saveDataForDate();
+      }
     }
-  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason, currentDate]);
+  }, [productiveActivities, unproductiveActivities, feelGood, feelGoodReason, currentDate, isSubmitted, isEditing]);
 
   const loadDataForDate = async (date: string) => {
     try {
@@ -190,7 +231,9 @@ export const HomeScreen: React.FC = () => {
   const hasActivities = productiveActivities.length > 0 || unproductiveActivities.length > 0;
   const isReadOnly = isSubmitted && !isEditing;
   const isToday = currentDate === DateUtils.getTodayString();
-  const canEdit = isToday || (isSubmitted && !isToday); // Can edit today anytime, or past submitted entries
+  const isPastDate = new Date(currentDate) < new Date(DateUtils.getTodayString());
+  const canEdit = isToday || isPastDate; // Can edit today anytime, or any past date
+  const canSubmit = !isSubmitted && canEdit; // Can submit if not already submitted and can edit
 
   return (
     <View style={[styles.container, isDarkMode && styles.containerDark]}>
@@ -257,7 +300,7 @@ export const HomeScreen: React.FC = () => {
 
         {/* Submit/Edit Buttons */}
         <View style={styles.buttonContainer}>
-          {!isSubmitted && isToday && (
+          {canSubmit && (
             <TouchableOpacity
               style={[
                 styles.submitButton,

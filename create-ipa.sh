@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#Terminal 1: Start Metro
+#npx expo start --dev-client
+
+# Terminal 2: Build and run
+#npx expo run:ios
+
 echo "🔨 Creating device IPA for iTrack (with Expo dev client)..."
 
 # Install expo-dev-client if not present

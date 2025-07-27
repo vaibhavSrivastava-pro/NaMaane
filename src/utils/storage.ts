@@ -73,7 +73,14 @@ export const StorageService = {
     try {
       const entries = await this.getAllEntries();
       return entries
-        .filter(entry => entry.feelGoodAboutDay !== undefined && entry.isSubmitted)
+        .filter(entry => {
+          // Mark dates as completed if they have been submitted
+          // OR if they have both activities and mood data (even if not formally submitted)
+          const hasActivities = (entry.productiveActivities?.length > 0) || (entry.unproductiveActivities?.length > 0);
+          const hasMoodData = entry.feelGoodAboutDay !== undefined;
+          
+          return entry.isSubmitted || (hasActivities && hasMoodData);
+        })
         .map(entry => entry.date);
     } catch (error) {
       console.error('Error getting completed dates:', error);

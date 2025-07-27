@@ -6,9 +6,10 @@ import {
   useColorScheme,
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StorageService } from '../utils/storage';
+import { DateSelectionService } from '../utils/dateSelection';
 import { RootStackParamList } from '../types';
 
 type CalendarScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Calendar'>;
@@ -23,6 +24,13 @@ export const CalendarScreen: React.FC = () => {
   useEffect(() => {
     loadCompletedDates();
   }, []);
+
+  // Refresh calendar when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCompletedDates();
+    }, [])
+  );
 
   const loadCompletedDates = async () => {
     try {
@@ -45,14 +53,15 @@ export const CalendarScreen: React.FC = () => {
 
   const onDayPress = async (day: DateData) => {
     try {
-      // Check if there's an entry for this date
-      const entry = await StorageService.getEntryByDate(day.dateString);
-      if (entry && entry.isSubmitted) {
-        // Navigate to home screen with the selected date
-        navigation.navigate('Main', { selectedDate: day.dateString });
-      }
+      // Store the selected date in global state
+      await DateSelectionService.setSelectedDate(day.dateString);
+      
+      // Navigate back to Main tab navigator
+      navigation.navigate('Main');
+      
+      console.log('Calendar: Selected date', day.dateString);
     } catch (error) {
-      console.error('Error checking day entry:', error);
+      console.error('Error navigating to day entry:', error);
     }
   };
 
