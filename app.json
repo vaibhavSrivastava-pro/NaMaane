@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.itsrivaibhav.itrack",
+      "bundleIdentifier": "com.itsrivaibhav.namaane",
       "deploymentTarget": "15.0",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

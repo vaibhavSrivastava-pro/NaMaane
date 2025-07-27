@@ -90,24 +90,122 @@ eas build:configure
 eas build --platform ios
 ```
 
-### 3. Exporting IPA
+### 3. Exporting IPA for Physical Device Installation
 
-> Make sure you have Xcode installed
+> **Prerequisites**: Make sure you have Xcode installed and an Apple Developer Account with a valid development certificate.
+
+#### Step 1: Initial Setup
+Before building the IPA, ensure your development environment is properly configured:
 
 ```bash
+# Verify you have a valid development certificate
+security find-identity -v -p codesigning
 
-#Start Metro
-`npx expo start --dev-client`
-
-#Build and run
-`npx expo run:ios`
-
-#Run the following script
-`./create-ipa.sh`
-
+# Should show something like:
+# 1) [TEAM_ID] "Apple Development: your.email@example.com (IDENTIFIER)"
 ```
 
-#### 4. Alternative: Expo Development Build
+#### Step 2: Configure Code Signing (One-time setup)
+If you need to set up code signing, run the setup script:
+
+```bash
+./setup-code-signing.sh
+```
+
+This script will:
+- Detect your development team ID
+- Configure the project with proper signing settings
+- Update the bundle identifier for your Apple Developer account
+
+#### Step 3: Generate iOS Project
+```bash
+# Generate the native iOS project with Expo dev client
+npx expo prebuild --platform ios
+```
+
+This creates the `ios/` directory with all necessary Xcode project files.
+
+#### Step 4: Install iOS Dependencies
+```bash
+# Navigate to iOS directory and install CocoaPods dependencies
+cd ios && pod install && cd ..
+```
+
+#### Step 5: Build and Export IPA
+Use the automated build script that handles all the complex build steps:
+
+```bash
+# Run the IPA creation script
+./create-ipa.sh
+```
+
+#### What the IPA Script Does:
+
+1. **Installs expo-dev-client** (if not already present)
+2. **Validates iOS project** structure
+3. **Starts Metro bundler** in background for React Native code
+4. **Builds and archives** the app for iOS device:
+   - First attempts Release configuration
+   - Falls back to Debug configuration if Release fails
+   - Uses automatic code signing with `-allowProvisioningUpdates`
+5. **Creates export options** for development distribution
+6. **Exports the IPA** file to `build/NaMaane.ipa`
+7. **Cleans up** by stopping Metro bundler
+
+#### Step 6: Install IPA on Your iPhone
+
+Once the IPA is created, you can install it using several methods:
+
+**Method 1: Using Sideloadly (Recommended)**
+1. Download [Sideloadly](https://sideloadly.io/)
+2. Connect your iPhone to your Mac via USB
+3. Open Sideloadly and drag the `build/NaMaane.ipa` file
+4. Enter your Apple ID credentials
+5. Install the app to your device
+
+**Method 2: Using Xcode**
+1. Open Xcode
+2. Go to Window → Devices and Simulators
+3. Select your connected iPhone
+4. Drag the IPA file to the "Installed Apps" section
+
+**Method 3: Using ios-deploy (Command Line)**
+```bash
+# Install ios-deploy if not already installed
+npm install -g ios-deploy
+
+# Install the IPA directly
+ios-deploy --bundle build/NaMaane.ipa
+```
+
+#### Troubleshooting IPA Build Issues
+
+**Code Signing Errors:**
+- Ensure you have a valid Apple Developer certificate
+- Run `./setup-code-signing.sh` to configure automatically
+- Check that your bundle identifier is unique in your Apple Developer account
+
+**Build Failures:**
+- Clean your build folder: `rm -rf build/`
+- Regenerate iOS project: `rm -rf ios && npx expo prebuild --platform ios`
+- Update CocoaPods: `cd ios && pod install --repo-update && cd ..`
+
+**Provisioning Profile Issues:**
+- The script uses `-allowProvisioningUpdates` to handle this automatically
+- Ensure your device is registered in your Apple Developer account
+- Check that your development certificate hasn't expired
+
+#### Alternative: Simulator Build (No Code Signing Required)
+For testing without device installation requirements:
+
+```bash
+# Build and run on iOS Simulator
+./build-simulator.sh
+```
+
+This builds the app for the iOS Simulator and doesn't require any code signing setup.
+
+### 4. Expo Development Build
 
 For easier testing on your iPhone:
 
@@ -191,6 +289,42 @@ The auto-export feature works as follows:
 - `npm run ios` - Run on iOS simulator
 - `npm run android` - Run on Android (if Android dependencies are added)
 - `npm run web` - Run in web browser
+
+## Build Scripts
+
+The project includes several helper scripts for iOS development:
+
+### `./create-ipa.sh`
+Main script for creating an IPA file for device installation:
+- Handles Metro bundler startup/shutdown
+- Builds and archives for iOS device
+- Exports IPA with proper code signing
+- Includes error handling and fallback options
+
+### `./setup-code-signing.sh`
+One-time setup script for configuring iOS code signing:
+- Detects available development teams
+- Automatically configures project settings
+- Updates bundle identifier
+- Provides manual setup instructions
+
+### `./build-simulator.sh`
+Alternative build script for iOS Simulator testing:
+- No code signing required
+- Quick testing without device setup
+- Automatically launches simulator
+
+### Usage Examples:
+```bash
+# First time setup
+./setup-code-signing.sh
+
+# Build for device
+./create-ipa.sh
+
+# Build for simulator (no signing needed)
+./build-simulator.sh
+```
 
 ## Troubleshooting
 

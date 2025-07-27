@@ -15,10 +15,10 @@ if ! grep -q "expo-dev-client" package.json; then
 fi
 
 # Check if iOS project exists or if app name has changed
-if [ ! -d "ios" ] || [ ! -d "ios/Na Maane!" ]; then
+if [ ! -d "ios" ] || [ ! -d "ios/NaMaane" ]; then
     echo "📱 iOS project not found or app name changed. Regenerating with dev client..."
     rm -rf ios
-    npx expo prebuild --platform ios --clear
+    npx expo prebuild --platform ios
     cd ios && pod install && cd ..
 fi
 
@@ -30,12 +30,30 @@ sleep 10
 
 # Build and archive for device
 echo "🏗️ Building and archiving for iOS device..."
-xcodebuild -workspace "ios/Na Maane!.xcworkspace" \
-    -scheme "Na Maane!" \
+# Create build directory
+mkdir -p build
+
+# First attempt: Try Release build
+echo "📋 Attempting Release build..."
+if xcodebuild -workspace "ios/NaMaane.xcworkspace" \
+    -scheme "NaMaane" \
     -configuration Release \
     -destination generic/platform=iOS \
-    -archivePath "build/Na Maane!.xcarchive" \
-    clean archive
+    -archivePath "build/NaMaane.xcarchive" \
+    -allowProvisioningUpdates \
+    clean archive; then
+    echo "✅ Release build successful!"
+else
+    echo "❌ Release build failed, trying Debug build..."
+    # Fallback: Try Debug build if Release fails
+    xcodebuild -workspace "ios/NaMaane.xcworkspace" \
+        -scheme "NaMaane" \
+        -configuration Debug \
+        -destination generic/platform=iOS \
+        -archivePath "build/NaMaane.xcarchive" \
+        -allowProvisioningUpdates \
+        clean archive
+fi
 
 # Stop Metro bundler
 kill $METRO_PID 2>/dev/null
@@ -60,9 +78,10 @@ EOF
 # Export IPA
 echo "📦 Exporting IPA..."
 xcodebuild -exportArchive \
-    -archivePath "build/Na Maane!.xcarchive" \
+    -archivePath "build/NaMaane.xcarchive" \
     -exportPath build/ \
-    -exportOptionsPlist ios/ExportOptions.plist
+    -exportOptionsPlist ios/ExportOptions.plist \
+    -allowProvisioningUpdates
 
-echo "✅ IPA created: build/Na Maane!.ipa"
+echo "✅ IPA created: build/NaMaane.ipa"
 echo "📱 This IPA includes Expo dev client and should work with Sideloadly!"
