@@ -3,30 +3,37 @@
     "version": ">= 5.2.0"
   },
   "build": {
+    "web": {
+      "channel": "production"
+    },
     "simulator": {
       "ios": {
         "simulator": true
-      }
+      },
+      "channel": "simulator"
     },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
         "simulator": false
-      }
+      },
+      "channel": "development"
     },
     "preview": {
       "distribution": "internal",
       "ios": {
         "simulator": false
-      }
+      },
+      "channel": "preview"
     },
     "device": {
       "distribution": "internal",
       "ios": {
         "simulator": false,
         "buildConfiguration": "Release"
-      }
+      },
+      "channel": "device"
     }
   }
 }

@@ -44,3 +44,6 @@ yarn-error.*
 *.tsbuildinfo
 
 .gitignore
+
+# Local Netlify folder
+.netlify

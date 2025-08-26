@@ -4,6 +4,26 @@ import * as FileSystem from 'expo-file-system';
 import { DayEntry } from '../types';
 import { StorageService } from './storage';
 
+// Web-compatible download function
+const downloadCSVWeb = (csvContent: string, fileName: string) => {
+  if (Platform.OS === 'web') {
+    // Create blob and download link for web
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+  }
+};
+
 export const CSVExportService = {
   formatCSVData(entries: DayEntry[], year: number, month: number): string {
     const headers = ['Date', 'What did I do Productive', 'What did I do Unproductive', 'Do you feel good about your day?', 'Why'];
@@ -62,28 +82,40 @@ export const CSVExportService = {
       ];
       
       const fileName = `EN-${monthNames[month]}${year}.csv`;
-      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
       
-      // Write the CSV file
-      await FileSystem.writeAsStringAsync(fileUri, csvData, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
-      
-      // Check if sharing is available
-      const isAvailable = await Sharing.isAvailableAsync();
-      
-      if (isAvailable) {
-        await Sharing.shareAsync(fileUri, {
-          mimeType: 'text/csv',
-          dialogTitle: 'Export EN Data',
-          UTI: 'public.comma-separated-values-text'
-        });
-      } else {
+      if (Platform.OS === 'web') {
+        // Web platform - use browser download
+        downloadCSVWeb(csvData, fileName);
         Alert.alert(
           'Export Complete', 
-          `CSV file saved as ${fileName}. File location: ${fileUri}`,
+          `CSV file downloaded as ${fileName}`,
           [{ text: 'OK' }]
         );
+      } else {
+        // Mobile platforms - use file system and sharing
+        const fileUri = `${FileSystem.documentDirectory}${fileName}`;
+        
+        // Write the CSV file
+        await FileSystem.writeAsStringAsync(fileUri, csvData, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        
+        // Check if sharing is available
+        const isAvailable = await Sharing.isAvailableAsync();
+        
+        if (isAvailable) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'text/csv',
+            dialogTitle: 'Export EN Data',
+            UTI: 'public.comma-separated-values-text'
+          });
+        } else {
+          Alert.alert(
+            'Export Complete', 
+            `CSV file saved as ${fileName}. File location: ${fileUri}`,
+            [{ text: 'OK' }]
+          );
+        }
       }
       
     } catch (error) {

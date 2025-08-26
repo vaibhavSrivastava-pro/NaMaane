@@ -19,7 +19,11 @@ export const TaskStorageService = {
 
   async saveTasks(tasks: Task[]): Promise<void> {
     try {
-      await AsyncStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+      console.log('Saving tasks:', tasks.length, 'tasks');
+      const tasksString = JSON.stringify(tasks);
+      console.log('Tasks JSON string length:', tasksString.length);
+      await AsyncStorage.setItem(TASKS_STORAGE_KEY, tasksString);
+      console.log('Tasks saved successfully to AsyncStorage');
     } catch (error) {
       console.error('Error saving tasks:', error);
       throw error;
@@ -71,7 +75,9 @@ export const TaskStorageService = {
 
   async deleteTask(taskId: string): Promise<void> {
     try {
+      console.log('Deleting task:', taskId);
       const tasks = await this.getAllTasks();
+      console.log('Current tasks before delete:', tasks.length);
       
       // Get all descendant tasks to delete them too
       const getDescendants = (id: string): string[] => {
@@ -84,9 +90,12 @@ export const TaskStorageService = {
       };
 
       const toDelete = [taskId, ...getDescendants(taskId)];
+      console.log('Tasks to delete:', toDelete);
       const filteredTasks = tasks.filter(t => !toDelete.includes(t.id));
+      console.log('Tasks after filter:', filteredTasks.length);
       
       await this.saveTasks(filteredTasks);
+      console.log('Tasks saved successfully');
     } catch (error) {
       console.error('Error deleting task:', error);
       throw error;

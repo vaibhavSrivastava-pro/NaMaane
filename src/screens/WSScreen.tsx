@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   useColorScheme,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Task } from '../types';
@@ -29,8 +30,11 @@ export const WSScreen: React.FC = () => {
 
   const loadTasks = async () => {
     try {
+      console.log('Loading tasks...');
       const taskList = await TaskStorageService.getTaskHierarchy();
+      console.log('Loaded tasks:', taskList.length, 'tasks');
       setTasks(taskList);
+      console.log('Tasks state updated');
     } catch (error) {
       console.error('Error loading tasks:', error);
     }
@@ -74,25 +78,53 @@ export const WSScreen: React.FC = () => {
   };
 
   const deleteTask = async (taskId: string) => {
-    Alert.alert(
-      'Delete Task',
-      'Are you sure? This will also delete all subtasks.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await TaskStorageService.deleteTask(taskId);
-              await loadTasks();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete task');
-            }
+    console.log('Delete task called with ID:', taskId);
+    
+    // For web platform, use confirm instead of Alert.alert
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure? This will also delete all subtasks.');
+      if (confirmed) {
+        try {
+          console.log('Proceeding with task deletion on web');
+          await TaskStorageService.deleteTask(taskId);
+          console.log('Task deleted, reloading tasks');
+          
+          // Force a fresh reload of tasks
+          const freshTasks = await TaskStorageService.getTaskHierarchy();
+          console.log('Fresh tasks loaded:', freshTasks.length);
+          setTasks(freshTasks);
+          
+          console.log('Tasks state updated successfully');
+        } catch (error) {
+          console.error('Error deleting task on web:', error);
+          window.alert('Failed to delete task: ' + (error instanceof Error ? error.message : String(error)));
+        }
+      }
+    } else {
+      Alert.alert(
+        'Delete Task',
+        'Are you sure? This will also delete all subtasks.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                console.log('Proceeding with task deletion on mobile');
+                await TaskStorageService.deleteTask(taskId);
+                console.log('Task deleted, reloading tasks');
+                await loadTasks();
+                console.log('Tasks reloaded successfully');
+              } catch (error) {
+                console.error('Error deleting task on mobile:', error);
+                Alert.alert('Error', 'Failed to delete task');
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const toggleExpanded = (taskId: string) => {
